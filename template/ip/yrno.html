@@ -33,11 +33,15 @@
     $(document).ready(function(){  get_weather("{{lat}}","{{lng}}") });
 </script>
 {% endblock %}
+
 {% block body %}
 <div>You are in <span id="detail">{{city}}</span></div>
 <div id="error"></div>
 <div id="lat">Latitude : {{lat}}</div>
 <div id="lng">Longtitude : {{lng}}</div>
+{% if from_cookie_text %}
+<div style="padding-top: 20px">Note : {{from_cookie_text}}</div>
+{% endif %}
 <div id="detail">
     <h3>Weather Detail</h3>
     <ul></ul>
