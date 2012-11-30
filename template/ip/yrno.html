@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block head %}
+<title>Norway Weather</title>
+<script type="text/javascript">
+    var weather;
+    function get_weather( lat, lng ) {
+        weather_url = "http://jsonproxy.appspot.com/proxy?url="+ 
+            "http%3A%2F%2Fapi.met.no%2Fweatherapi%2Flocationforecast%2F1.8%2F%3Flat%3D" + 
+            lat + "%3Blon%3D" + lng;
+        $.ajax({
+            url: weather_url,
+            dataType: 'jsonp',
+            success: render_weather,
+        });
+    }
+
+    function render_weather( data ) {
+        // so that you can play with data in js console
+        weather = data;
+        
+        var detail_div = $("#detail ul"),
+            date_from = data.weatherdata.product.time["@from"],
+            date_to   = data.weatherdata.product.time["@to"],
+            temp_unit = data.weatherdata.product.time.location.temperature["@unit"],
+            temp_val  = data.weatherdata.product.time.location.temperature["@value"];
+        detail_div
+            .append("<li>Date : from " + date_from + " to " + date_to + "</li>")
+            .append("<li>Temperature : " + temp_val + " " + temp_unit + "</li>");
+    }
+
+    // start point
+    $(document).ready(function(){  get_weather("{{lat}}","{{lng}}") });
+</script>
+{% endblock %}
+{% block body %}
+<div>You are in <span id="detail">{{city}}</span></div>
+<div id="error"></div>
+<div id="lat">Latitude : {{lat}}</div>
+<div id="lng">Longtitude : {{lng}}</div>
+<div id="detail">
+    <h3>Weather Detail</h3>
+    <ul></ul>
+</div>
+{% endblock %}
