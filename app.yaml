@@ -1,0 +1,13 @@
+application: keekung-weather
+version: 2
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+- url: /.*
+  script: weather.app
+
+libraries:
+- name: jinja2
+  version: latest

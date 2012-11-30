@@ -1,0 +1,91 @@
+{% block head %}
+<title>Norway Weather</title>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js" /></script>
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?sensor=false">
+</script>
+<script type="text/javascript">
+    var geocoder;
+    var WEATHER_API_KEY = "fa0190d15d154045";
+    function get_geolocation(){
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(get_location_callback);
+        } else {
+            document.getElementById("error").innerHTML= "Geolocation is not supported by this browser.";
+        }
+    }
+
+    function get_location_callback(position) {
+        var lat = position.coords.latitude;
+        var lng = position.coords.longitude;
+        var latlng = new google.maps.LatLng(lat, lng);
+        var keyword;
+        $("#lat").text("Latitude : " + lat );
+        $("#lng").text("Longtitude : " + lng );
+        geocoder = new google.maps.Geocoder();
+        geocoder.geocode( { 'latLng' : latlng }, function( result, status ) {
+            if ( status = google.maps.GeocoderStatus.OK ) {
+                console.info(result);
+                if (result[0]) {
+                    keyword = get_city_or_country(result[0].address_components); 
+                    document.getElementById("detail").innerHTML = keyword;
+                    get_weather(keyword);
+                } 
+            } else {
+                console.info( "fail : " + status );
+            }
+        });
+    }
+
+    function get_weather( keyword ) {
+        $.ajax({
+            url: "https://api.wunderground.com/api/" + WEATHER_API_KEY + "/forecast/q/" + keyword +".json?callback=a",
+            dataType: 'jsonp',
+            success: render_weather,
+        });
+    }
+
+    function render_weather( data ){
+        console.log(data); 
+        var forcastday = data.forecast.simpleforecast.forecastday,
+            detail_div = $("#detail ul"),
+            datestring, icon_url, high_celcius, low_celcius;
+    
+        for( var i = 0; i < forcastday.length; i++ ){
+            datestring   = forcastday[i].date.pretty;
+            icon_url     = forcastday[i].icon_url;
+            high_celsius = forcastday[i].high.celsius;
+            low_celsius  = forcastday[i].low.celsius;
+            detail_div.append("<li><img src=" + icon_url+" />Date : " + 
+                datestring + 
+                ", Hi temp. : " + high_celsius + 
+                "c, Lo temp. : " + low_celsius + "c</li>"
+            );
+        }
+    }
+
+    function get_city_or_country(address_components) {
+        var type, city, country;
+        for( var i = 0; i < address_components.length; i++) {
+            type  = address_components[i].types[0];
+            value = address_components[i].long_name;
+            if ( type == "locality" ) {
+                city    = value;
+            } else if ( type == "country" ) {
+                country = value;
+            }
+        }
+        return city != undefined ? city : country;
+    }
+
+    // startp point
+    $(document).ready(get_geolocation);
+    
+</script>
+{% endblock %}
+{% block body %}
+<div>You are in <span id="detail"></span></div>
+<div id="error"></div>
+<div id="lat"></div>
+<div id="lng"></div>
+<div id="detail"><ul></ul></div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block head %}
+<title>Norway Weather</title>
+<script type="text/javascript">
+    var geocoder, weather;
+    function get_geolocation(){
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(get_location_callback);
+        } else {
+            document.getElementById("error").innerHTML= "Geolocation is not supported by this browser.";
+        }
+    }
+
+    function get_location_callback(position) {
+        var lat = position.coords.latitude;
+        var lng = position.coords.longitude;
+        var latlng = new google.maps.LatLng(lat, lng);
+        var keyword;
+        $("#lat").text("Latitude : " + lat );
+        $("#lng").text("Longtitude : " + lng );
+
+        // get weather info
+        get_weather( lat, lng );
+
+        // get city
+        geocoder = new google.maps.Geocoder();
+        geocoder.geocode( { 'latLng' : latlng }, function( result, status ) {
+            if ( status = google.maps.GeocoderStatus.OK ) {
+                console.info(result);
+                if (result[0]) {
+                    keyword = get_city_or_country(result[0].address_components); 
+                    $("#detail").text(keyword);
+                } 
+            } else {
+                console.info( "fail : " + status );
+            }
+        });
+    }
+
+    function get_weather( lat, lng ) {
+        weather_url = "http://jsonproxy.appspot.com/proxy?url="+ 
+            "http%3A%2F%2Fapi.met.no%2Fweatherapi%2Flocationforecast%2F1.8%2F%3Flat%3D" + 
+            lat + "%3Blon%3D" + lng;
+        $.ajax({
+            url: weather_url,
+            dataType: 'jsonp',
+            success: render_weather,
+        });
+    }
+
+    function render_weather( data ) {
+        // so that you can play with data in js console
+        weather = data;
+        
+        var detail_div = $("#detail ul"),
+            date_from = data.weatherdata.product.time["@from"],
+            date_to   = data.weatherdata.product.time["@to"],
+            temp_unit = data.weatherdata.product.time.location.temperature["@unit"],
+            temp_val  = data.weatherdata.product.time.location.temperature["@value"];
+        detail_div
+            .append("<li>Date : from " + date_from + " to " + date_to + "</li>")
+            .append("<li>Temperature : " + temp_val + " " + temp_unit + "</li>");
+    }
+
+    function get_city_or_country(address_components) {
+        var type, city, country;
+        for( var i = 0; i < address_components.length; i++) {
+            type  = address_components[i].types[0];
+            value = address_components[i].long_name;
+            if ( type == "locality" ) {
+                city    = value;
+            } else if ( type == "country" ) {
+                country = value;
+            }
+        }
+        return city != undefined ? city : country;
+    }
+
+    // start point
+    $(document).ready(get_geolocation);
+</script>
+{% endblock %}
+{% block body %}
+<div>You are in <span id="detail"></span></div>
+<div id="error"></div>
+<div id="lat"></div>
+<div id="lng"></div>
+<div id="detail">
+    <h3>Weather Detail</h3>
+    <ul></ul>
+</div>
+{% endblock %}
